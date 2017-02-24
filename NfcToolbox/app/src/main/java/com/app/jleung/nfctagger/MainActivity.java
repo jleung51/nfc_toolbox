@@ -1,21 +1,13 @@
 package com.app.jleung.nfctagger;
 
-import static com.app.jleung.nfctagger.NfcReader.NfcReadFailureException;
-
 import android.content.Intent;
-import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.Ndef;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+import static com.app.jleung.nfctagger.NfcReader.NfcReadFailureException;
 
 public class MainActivity extends AppCompatActivity {
 
