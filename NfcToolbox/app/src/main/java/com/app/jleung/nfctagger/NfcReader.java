@@ -14,26 +14,40 @@ public class NfcReader {
 
     private static final String TAG = NfcReader.class.getSimpleName();
 
-    private static final String MIME_TEXT_PLAIN = "text/plain";
-
     public String readTagFromIntent(Intent intent) throws NfcReadFailureException {
+        String action = intent.getAction();
+        Log.d(TAG, "Received intent with action [" + action + "]");
+
         // No tag when you startup the application
-        if(intent.getAction().equals("android.intent.action.MAIN")) {
+        if(action.equals("android.intent.action.MAIN")) {
             Log.d(TAG, "Startup Intent detected - no action taken");
             return null;
         }
-        else if(!NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
-            throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_TAG_TYPE);
-        }
-        else if(!MIME_TEXT_PLAIN.equals(intent.getType())) {
-            throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_CONTENT_TYPE);
-        }
 
-        return readTag((Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG));
+        switch(action) {
+            case NfcAdapter.ACTION_NDEF_DISCOVERED:
+                if(intent.getType().equals(MimeType.TEXT_PLAIN)) {
+                    return readParcelableTag((Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG));
+                }
+                else {
+                    throw new NfcReadFailureException(
+                            NfcReadFailureException.Reason.INVALID_CONTENT_TYPE
+                    );
+                }
+            case NfcAdapter.ACTION_TECH_DISCOVERED:
+                Tag parcelableTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                for(String techType : parcelableTag.getTechList()) {
+                    if (techType.equals(Ndef.class.getName())) {
+                        return readParcelableTag(parcelableTag);
+                    }
+                }
+            default:
+                throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_TAG_TYPE);
+        }
     }
 
-    private String readTag(Tag tag) throws NfcReadFailureException {
-        Ndef ndefTag = Ndef.get(tag);
+    private String readParcelableTag(Tag parcelableTag) throws NfcReadFailureException {
+        Ndef ndefTag = Ndef.get(parcelableTag);
         if(ndefTag == null) {
             throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_TAG_TYPE);
         }
