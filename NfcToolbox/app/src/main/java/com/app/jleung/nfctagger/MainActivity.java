@@ -31,12 +31,24 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        handleIntent(getIntent());
+        try {
+            handleIntent(getIntent());
+        }
+        catch(NfcReadFailureException e) {
+            Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
+            return;
+        }
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
-        handleIntent(intent);
+        try {
+            handleIntent(getIntent());
+        }
+        catch(NfcReadFailureException e) {
+            Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
+            return;
+        }
     }
 
     private boolean instantiateNfcAdapter() {
@@ -52,31 +64,21 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void handleIntent(Intent intent) {
+    private void handleIntent(Intent intent) throws NfcReadFailureException {
         if(!NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
-            Toast.makeText(this, "Invalid tag type.", Toast.LENGTH_LONG).show();
-            return;
+            throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_TAG_TYPE);
         }
         else if(!MIME_TEXT_PLAIN.equals(intent.getType())) {
-            Toast.makeText(this, "Invalid tag text.", Toast.LENGTH_LONG).show();
-            return;
+            throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_CONTENT_TYPE);
         }
 
-        String data;
-        try {
-            data = readTag((Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG));
-        }
-        catch(UnsupportedEncodingException e) {
-            Toast.makeText(this, "Invalid tag text encoding.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        
+        String data = readTag((Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG));
         if(data != null) {
             textView.setText("Tag data: " + data);
         }
     }
 
-    private String readTag(Tag tag) throws UnsupportedEncodingException {
+    private String readTag(Tag tag) throws NfcReadFailureException {
         Ndef ndef = Ndef.get(tag);
         if(ndef == null) {
             return null;
@@ -107,17 +109,52 @@ public class MainActivity extends AppCompatActivity {
      * @return
      * @throws UnsupportedEncodingException
      */
-    private String readTagText(NdefRecord ndefRecord) throws UnsupportedEncodingException {
+    private String readTagText(NdefRecord ndefRecord) throws NfcReadFailureException {
         byte[] payload = ndefRecord.getPayload();
         int languageCodeLength = payload[0] & 0063;
         String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
 
-        return new String(
-                payload,
-                languageCodeLength + 1,
-                payload.length - languageCodeLength - 1,
-                textEncoding
-        );
+        try {
+            return new String(
+                    payload,
+                    languageCodeLength + 1,
+                    payload.length - languageCodeLength - 1,
+                    textEncoding
+            );
+        }
+        catch(UnsupportedEncodingException e) {
+            throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_ENCODING);
+        }
+    }
+
+    public static class NfcReadFailureException extends Exception {
+
+        private Reason reason;
+
+        public NfcReadFailureException(Reason reason) {
+            super();
+            this.reason = reason;
+        }
+
+        public Reason getReason() {
+            return reason;
+        }
+
+        public static enum Reason {
+            INVALID_TAG_TYPE("Invalid tag type; NDEF is required"),
+            INVALID_CONTENT_TYPE("Invalid content type; text/plain is required"),
+            INVALID_ENCODING("Invalid text encoding");
+
+            private String text;
+
+            private Reason(String text) {
+                this.text = text;
+            }
+
+            public String getText() {
+                return text;
+            }
+        }
     }
 
 }
