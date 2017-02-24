@@ -5,8 +5,8 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleIntent(Intent intent) throws NfcReadFailureException {
-        if(!NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
+        if(intent.getAction().equals("android.intent.action.MAIN")) {  // Startup
+            return;
+        }
+        else if(!NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
             throw new NfcReadFailureException(NfcReadFailureException.Reason.INVALID_TAG_TYPE);
         }
         else if(!MIME_TEXT_PLAIN.equals(intent.getType())) {
