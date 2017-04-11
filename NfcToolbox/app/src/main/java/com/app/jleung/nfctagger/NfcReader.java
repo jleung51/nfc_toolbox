@@ -15,8 +15,8 @@ public class NfcReader {
 
     private static final String TAG = NfcReader.class.getSimpleName();
 
-    public static void instantiateNfcAdapter(Activity activity) throws NfcException {
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(activity);
+    public static void instantiateNfcAdapter(Context context) throws NfcException {
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(context);
         if(nfcAdapter == null) {
             throw new NfcException(NfcException.Reason.NOT_SUPPORTED);
         }
