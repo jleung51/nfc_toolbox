@@ -4,10 +4,11 @@ import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import static com.app.jleung.nfctagger.NfcReader.NfcReadFailureException;
+import static com.app.jleung.nfctagger.NfcReader.NfcException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,9 +29,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         textView = (TextView) findViewById(R.id.home_text);
 
-        if(!instantiateNfcAdapter()) {
+        try {
+            nfcReader.instantiateNfcAdapter(this);
+        }
+        catch(NfcException e) {
+            Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
+            if(e.getReason().equals(NfcException.Reason.NOT_SUPPORTED)) {
+                finish();
+            }
             return;
         }
+
         readTagDataTo(textView);
     }
 
@@ -39,28 +48,16 @@ public class MainActivity extends AppCompatActivity {
         readTagDataTo(textView);
     }
 
-    private boolean instantiateNfcAdapter() {
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if(nfcAdapter == null) {
-            Toast.makeText(this, "NFC is not supported on this device.", Toast.LENGTH_LONG).show();
-            finish();
-            return false;
-        }
-        else if(!nfcAdapter.isEnabled()) {
-            Toast.makeText(this, "Please enable NFC on your device.", Toast.LENGTH_LONG).show();
-        }
-        return true;
-    }
-
     private void readTagDataTo(TextView textView) {
         String data;
         try {
             data = nfcReader.readTagFromIntent(getIntent());
         }
-        catch(NfcReadFailureException e) {
+        catch(NfcException e) {
             Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
             return;
         }
+
         if(data != null) {
             textView.setText("Tag data: " + data);
         }
