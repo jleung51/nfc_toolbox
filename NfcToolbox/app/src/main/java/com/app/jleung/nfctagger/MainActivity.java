@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,13 +13,8 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView textView;
 
-    private NfcAdapter nfcAdapter;
-
-    private NfcReader nfcReader;
-
     public MainActivity() {
         super();
-        nfcReader = new NfcReader();
     }
 
     @Override
@@ -30,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.home_text);
 
         try {
-            nfcReader.instantiateNfcAdapter(this);
+            NfcReader.instantiateNfcAdapter(this);
         }
         catch(NfcException e) {
             Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
@@ -51,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private void readTagDataTo(TextView textView) {
         String data;
         try {
-            data = nfcReader.readTagFromIntent(getIntent());
+            data = NfcReader.readTagFromIntent(getIntent());
         }
         catch(NfcException e) {
             Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
