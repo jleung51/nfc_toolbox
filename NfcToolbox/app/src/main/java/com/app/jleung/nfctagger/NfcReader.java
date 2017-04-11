@@ -142,4 +142,10 @@ public class NfcReader {
         }
     }
 
+    private abstract static class MimeType {
+
+        public static final String TEXT_PLAIN = "text/plain";
+
+    }
+
 }
