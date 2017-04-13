@@ -1,12 +1,16 @@
 package com.app.jleung.nfctagger;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.nfc.tech.NfcA;
+import android.nfc.tech.NfcB;
 import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
@@ -16,17 +20,61 @@ public class NfcReader {
 
     private static final String TAG = NfcReader.class.getSimpleName();
 
-    public static void instantiateNfcAdapter(Context context) throws NfcException {
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(context);
+    private NfcAdapter nfcAdapter;
+
+    private PendingIntent pendingIntent;
+
+    private IntentFilter[] intentFilters;
+
+    private String[][] nfcTechList;
+
+    public NfcReader(Activity currentActivity) throws NfcException {
+
+        nfcAdapter = NfcAdapter.getDefaultAdapter(currentActivity);
         if(nfcAdapter == null) {
             throw new NfcException(NfcException.Reason.NOT_SUPPORTED);
         }
         else if(!nfcAdapter.isEnabled()) {
             throw new NfcException(NfcException.Reason.NOT_ENABLED);
         }
+
+        pendingIntent = PendingIntent.getActivity(
+                currentActivity, 0,
+                new Intent(
+                        currentActivity,
+                        currentActivity.getClass()
+                ).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0
+        );
+
+        intentFilters = new IntentFilter[] {
+                new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
+        };
+        try {
+            intentFilters[0].addDataType(MimeType.ANY);
+        }
+        catch (IntentFilter.MalformedMimeTypeException e) {
+            throw new RuntimeException("Internal Error: The Mime-Type was set incorrectly.", e);
+        }
+
+        nfcTechList = new String[][] {
+                new String[]{ Ndef.class.getName() },
+                new String[]{ NfcA.class.getName() },
+                new String[]{ NfcB.class.getName() }
+        };
+
     }
 
-    public static String readTagFromIntent(Intent intent) throws NfcException {
+    public void pause(Activity currentActivity) {
+        nfcAdapter.disableForegroundDispatch(currentActivity);
+    }
+
+    public void resume(Activity currentActivity) {
+        nfcAdapter.enableForegroundDispatch(
+                currentActivity, pendingIntent, intentFilters, nfcTechList
+        );
+    }
+
+    public String readTagFromIntent(Intent intent) throws NfcException {
         String action = intent.getAction();
         Log.d(TAG, "Received intent with action [" + action + "]");
 
@@ -144,6 +192,8 @@ public class NfcReader {
     }
 
     private abstract static class MimeType {
+
+        public static final String ANY = "*/*";
 
         public static final String TEXT_PLAIN = "text/plain";
 

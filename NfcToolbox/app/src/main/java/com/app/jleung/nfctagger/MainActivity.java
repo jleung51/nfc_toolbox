@@ -1,7 +1,6 @@
 package com.app.jleung.nfctagger;
 
 import android.content.Intent;
-import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
@@ -11,11 +10,9 @@ import static com.app.jleung.nfctagger.NfcReader.NfcException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView textView;
+    private NfcReader nfcReader;
 
-    public MainActivity() {
-        super();
-    }
+    private TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.home_text);
 
         try {
-            NfcReader.instantiateNfcAdapter(this);
+            nfcReader = new NfcReader(this);
         }
         catch(NfcException e) {
             Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
@@ -33,28 +30,41 @@ public class MainActivity extends AppCompatActivity {
             }
             return;
         }
+    }
 
-        readTagDataTo(textView);
+    @Override
+    public void onPause() {
+        super.onPause();
+        nfcReader.pause(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        nfcReader.resume(this);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
-        readTagDataTo(textView);
+        readTagDataTo(intent);
     }
 
-    private void readTagDataTo(TextView textView) {
+    private void readTagDataTo(Intent intent) {
         String data;
         try {
-            data = NfcReader.readTagFromIntent(getIntent());
+            data = nfcReader.readTagFromIntent(intent);
         }
         catch(NfcException e) {
             Toast.makeText(this, e.getReason().getText(), Toast.LENGTH_LONG).show();
             return;
         }
 
-        if(data != null) {
-            textView.setText("Tag data: " + data);
+        if(data == null) {
+            return;
         }
+
+        textView.setText("Tag data: " + data);
+        Toast.makeText(this, "Read tag data", Toast.LENGTH_SHORT).show();
     }
 
 }
