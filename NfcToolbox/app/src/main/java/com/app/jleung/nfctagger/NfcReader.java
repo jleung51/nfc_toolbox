@@ -1,6 +1,7 @@
 package com.app.jleung.nfctagger;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
