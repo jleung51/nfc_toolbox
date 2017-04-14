@@ -41,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        nfcReader.resume(this);
+        if(nfcReader != null) {
+            nfcReader.resume(this);
+        }
     }
 
     @Override
